@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biostack Logistics Network — MOC x Haystack Analytics</title>
+  <meta name="description" content="Biostack's genomic logistics infrastructure mapping MOC Cancer Care centers to Haystack Analytics at IIT Bombay, visualizing sample flow, transit times, and NABH classification across the Mumbai Metropolitan Region." />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bs-bg:        #050d18;
+      --bs-surface:   #0a1628;
+      --bs-surface-2: #0f1f35;
+      --bs-border:    rgba(255,255,255,0.07);
+      --bs-teal:      #00c2a8;
+      --bs-teal-dim:  rgba(0,194,168,0.15);
+      --bs-cyan:      #17d4e8;
+
+      --entry-color:  #f59e0b;
+      --entry-glow:   rgba(245,158,11,0.32);
+      --entry-dim:    rgba(245,158,11,0.10);
+      --full-color:   #3b82f6;
+      --full-glow:    rgba(59,130,246,0.30);
+      --full-dim:     rgba(59,130,246,0.10);
+      --hub-glow:     rgba(0,194,168,0.40);
+
+      --text:     #f0f6ff;
+      --text-dim: #7b9aba;
+      --text-muted: #4a6280;
+
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --ease: 0.22s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bs-bg); color: var(--text); overflow: hidden; }
+
+    /* SHELL */
+    .shell { display: flex; flex-direction: column; height: 100vh; }
+
+    /* HEADER */
+    .header {
+      flex-shrink: 0; height: 58px;
+      display: flex; align-items: center; padding: 0 22px; gap: 14px;
+      background: var(--bs-surface);
+      border-bottom: 1px solid var(--bs-border);
+      z-index: 1000; position: relative;
+    }
+
+    .brand-logo {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--bs-teal) 0%, var(--bs-cyan) 100%);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      box-shadow: 0 0 16px var(--bs-teal-dim);
+    }
+    .brand-logo svg { width: 18px; height: 18px; fill: none; stroke: var(--bs-bg); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+    .brand-name {
+      font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px;
+      background: linear-gradient(90deg, var(--bs-teal), var(--bs-cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .brand-sub { font-size: 10px; color: var(--text-dim); letter-spacing: 0.4px; text-transform: uppercase; }
+
+    .header-sep { width: 1px; height: 26px; background: var(--bs-border); margin: 0 16px; }
+
+    .header-title { font-size: 12px; font-weight: 500; color: var(--text-dim); }
+    .header-title span { color: var(--text); font-weight: 600; }
+
+    .header-badges { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600; border: 1px solid;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .badge-entry { color: var(--entry-color); border-color: rgba(245,158,11,0.28); background: var(--entry-dim); }
+    .badge-entry .badge-dot { background: var(--entry-color); }
+    .badge-full  { color: var(--full-color);  border-color: rgba(59,130,246,0.28);  background: var(--full-dim); }
+    .badge-full  .badge-dot { background: var(--full-color); }
+
+    /* STATS BAR */
+    .stats-bar {
+      flex-shrink: 0; display: flex;
+      background: var(--bs-surface); border-bottom: 1px solid var(--bs-border);
+    }
+    .stat-pill { display: flex; align-items: center; gap: 8px; padding: 7px 20px; border-right: 1px solid var(--bs-border); }
+    .stat-pill:last-child { border-right: none; margin-left: auto; border-left: 1px solid var(--bs-border); }
+    .stat-num { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; }
+    .stat-num.teal  { color: var(--bs-teal); }
+    .stat-num.amber { color: var(--entry-color); }
+    .stat-num.blue  { color: var(--full-color); }
+    .stat-desc { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
+
+    /* MAP AREA */
+    .map-area { flex: 1; display: flex; position: relative; overflow: hidden; }
+    #map { flex: 1; background: var(--bs-bg); }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 292px; flex-shrink: 0;
+      background: var(--bs-surface); border-left: 1px solid var(--bs-border);
+      display: flex; flex-direction: column; z-index: 500; overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 3px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--bs-border); border-radius: 2px; }
+
+    .sb-section { padding: 18px 18px; border-bottom: 1px solid var(--bs-border); }
+    .sb-section:last-child { border-bottom: none; flex: 1; }
+
+    .sb-label { font-size: 9px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+
+    /* Hub card */
+    .hub-card {
+      background: linear-gradient(135deg, rgba(0,194,168,0.10) 0%, rgba(23,212,232,0.04) 100%);
+      border: 1px solid rgba(0,194,168,0.20);
+      border-radius: var(--radius-md); padding: 14px;
+      display: flex; align-items: flex-start; gap: 11px;
+    }
+    .hub-icon {
+      width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--bs-teal), var(--bs-cyan));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 14px var(--hub-glow);
+    }
+    .hub-icon svg { width: 16px; height: 16px; fill: none; stroke: var(--bs-bg); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .hub-info h3 { font-size: 12px; font-weight: 700; color: var(--bs-teal); margin-bottom: 2px; }
+    .hub-info p  { font-size: 10.5px; color: var(--text-dim); line-height: 1.4; }
+    .hub-role    { margin-top: 5px; font-size: 9.5px; font-weight: 600; color: var(--bs-cyan); letter-spacing: 0.3px; text-transform: uppercase; }
+
+    /* Legend */
+    .leg-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+    .leg-item:last-child { margin-bottom: 0; }
+    .leg-mk {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; border: 1.5px solid;
+    }
+    .leg-mk.entry { background: var(--entry-dim); border-color: var(--entry-color); box-shadow: 0 0 8px var(--entry-glow); }
+    .leg-mk.full  { background: var(--full-dim);  border-color: var(--full-color);  box-shadow: 0 0 8px var(--full-glow); }
+    .leg-mk span  { font-size: 12px; }
+    .leg-text h4  { font-size: 11px; font-weight: 600; margin-bottom: 1px; }
+    .leg-text p   { font-size: 10px; color: var(--text-dim); line-height: 1.35; }
+
+    /* Center list */
+    .center-list { display: flex; flex-direction: column; gap: 4px; }
+    .cli {
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 9px; border-radius: var(--radius-sm);
+      cursor: pointer; border: 1px solid transparent;
+      transition: background var(--ease);
+    }
+    .cli:hover { background: var(--bs-surface-2); border-color: var(--bs-border); }
+    .cli.active { background: var(--bs-surface-2); border-color: var(--bs-teal); }
+    .cli-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cli-dot.entry { background: var(--entry-color); box-shadow: 0 0 5px var(--entry-glow); }
+    .cli-dot.full  { background: var(--full-color);  box-shadow: 0 0 5px var(--full-glow); }
+    .cli-name { flex: 1; font-size: 11.5px; font-weight: 500; }
+    .cli-time { font-size: 9.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+    /* INFO PANEL */
+    .info-panel {
+      position: absolute; bottom: 22px; left: 22px; width: 310px;
+      background: var(--bs-surface); border: 1px solid var(--bs-border);
+      border-radius: var(--radius-lg); padding: 18px; z-index: 900;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      opacity: 0; transform: translateY(12px); pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .info-panel.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+    .ip-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .ip-title { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; line-height: 1.2; }
+    .ip-close {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--bs-surface-2); border: 1px solid var(--bs-border);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: var(--text-dim); transition: background var(--ease);
+    }
+    .ip-close:hover { background: rgba(255,255,255,0.07); }
+
+    .ip-tier {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 8px; border-radius: 12px; font-size: 9.5px; font-weight: 700;
+      letter-spacing: 0.4px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid;
+    }
+    .ip-tier.entry { color: var(--entry-color); border-color: rgba(245,158,11,0.35); background: var(--entry-dim); }
+    .ip-tier.full  { color: var(--full-color);  border-color: rgba(59,130,246,0.35);  background: var(--full-dim); }
+
+    .ip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .ip-stat { background: var(--bs-surface-2); border: 1px solid var(--bs-border); border-radius: var(--radius-sm); padding: 9px 11px; }
+    .ip-stat-lbl { font-size: 9px; font-weight: 600; letter-spacing: 0.7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+    .ip-stat-val { font-size: 13px; font-weight: 700; }
+    .ip-stat-val.teal { color: var(--bs-teal); }
+
+    .ip-phone {
+      display: flex; align-items: center; gap: 7px;
+      padding: 9px 11px; background: var(--bs-surface-2); border: 1px solid var(--bs-border);
+      border-radius: var(--radius-sm); font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px;
+    }
+    .ip-phone svg { width: 12px; height: 12px; fill: none; stroke: var(--bs-teal); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+    .ip-desc { font-size: 10.5px; color: var(--text-dim); line-height: 1.55; }
+
+    /* LEAFLET OVERRIDES */
+    .leaflet-container { background: var(--bs-bg) !important; font-family: 'Inter', sans-serif; }
+    .leaflet-control-attribution { background: rgba(5,13,24,0.82) !important; color: #3a5168 !important; font-size: 9px !important; border-radius: 6px 0 0 0 !important; }
+    .leaflet-control-attribution a { color: var(--full-color) !important; }
+    .leaflet-control-zoom { border: 1px solid var(--bs-border) !important; border-radius: var(--radius-sm) !important; overflow: hidden; box-shadow: none !important; }
+    .leaflet-control-zoom a { background: var(--bs-surface) !important; color: var(--text-dim) !important; border-bottom: 1px solid var(--bs-border) !important; width: 28px !important; height: 28px !important; line-height: 28px !important; font-size: 15px !important; transition: background var(--ease); }
+    .leaflet-control-zoom a:hover { background: var(--bs-surface-2) !important; color: var(--bs-teal) !important; }
+
+    /* TOOLTIPS */
+    .tt {
+      background: #0b1a2e !important; border: 1px solid var(--bs-border) !important;
+      border-radius: 9px !important; color: var(--text) !important;
+      font-family: 'Inter', sans-serif !important; font-size: 11px !important;
+      padding: 10px 13px !important; box-shadow: 0 8px 28px rgba(0,0,0,0.5) !important;
+      line-height: 1.5; min-width: 170px;
+    }
+    .tt::before { display: none !important; }
+    .tt-name   { font-size: 12.5px; font-weight: 700; margin-bottom: 3px; }
+    .tt-tier   { font-size: 9px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
+    .tt-tier.entry { color: var(--entry-color); }
+    .tt-tier.full  { color: var(--full-color); }
+    .tt-tier.hub   { color: var(--bs-teal); }
+    .tt-sep        { height: 1px; background: var(--bs-border); margin: 7px 0; }
+    .tt-row        { display: flex; justify-content: space-between; gap: 14px; margin-top: 3px; }
+    .tt-lbl        { color: var(--text-muted); font-size: 10px; }
+    .tt-val        { font-weight: 600; }
+    .tt-val.teal   { color: var(--bs-teal); }
+
+    /* PULSES */
+    @keyframes pulse {
+      0%   { transform: scale(0.85); opacity: 0.7; }
+      70%  { transform: scale(1.8); opacity: 0; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+    .mk-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+    .mk-ring { position: absolute; border-radius: 50%; animation: pulse 2.4s ease-out infinite; }
+    .mk-core { position: relative; z-index: 2; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.2); }
+
+    /* ROUTE LINE ANIMATION */
+    @keyframes dashMove { to { stroke-dashoffset: -36; } }
+    .leaflet-overlay-pane path { animation: dashMove 4s linear infinite; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .info-panel { width: calc(100vw - 32px); left: 16px; bottom: 16px; }
+      .header-badges { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <header class="header">
+
+    <div class="brand-text">
+      <span class="brand-name">Biostack</span>
+      <span class="brand-sub">Genomic Logistics</span>
+    </div>
+    <div class="header-sep"></div>
+    <div class="header-title"><span>MOC Network</span> x Haystack Analytics @ IIT Bombay</div>
+    <div class="header-badges">
+      <span class="badge badge-entry"><span class="badge-dot"></span>Entry NABH</span>
+      <span class="badge badge-full"><span class="badge-dot"></span>Full NABH</span>
+    </div>
+  </header>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-pill">
+      <span class="stat-num teal">12</span>
+      <span class="stat-desc">Total<br>Centers</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num amber">9</span>
+      <span class="stat-desc">Entry-Level<br>NABH</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num blue">3</span>
+      <span class="stat-desc">Full<br>NABH</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num teal" style="font-size:11px;">IIT Bombay</span>
+      <span class="stat-desc">Haystack Analytics<br>Analysis Hub</span>
+    </div>
+  </div>
+
+  <!-- MAP + SIDEBAR -->
+  <div class="map-area">
+    <div id="map"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sb-section">
+        <div class="sb-label">Analysis Hub</div>
+        <div class="hub-card">
+          <div class="hub-icon">
+            <svg viewBox="0 0 18 18">
+              <path d="M9 2L2 6l7 4 7-4-7-4z"/>
+              <path d="M2 13l7 4 7-4"/>
+              <path d="M2 9.5l7 4 7-4"/>
+            </svg>
+          </div>
+          <div class="hub-info">
+            <h3>Haystack Analytics</h3>
+            <p>SINE, KReSIT Building<br>IIT Bombay, Powai 400076</p>
+            <div class="hub-role">Genomic Analysis Partner</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-label">Classification</div>
+        <div class="leg-item">
+          <div class="leg-mk entry"><span>◉</span></div>
+          <div class="leg-text">
+            <h4 style="color:var(--entry-color);">Entry-Level NABH</h4>
+            <p>Patient recruitment. Samples sent to Haystack for sequencing.</p>
+          </div>
+        </div>
+        <div class="leg-item">
+          <div class="leg-mk full"><span>⬡</span></div>
+          <div class="leg-text">
+            <h4 style="color:var(--full-color);">Full NABH</h4>
+            <p>In-house sequencing possible. Analysis collaboration with Haystack.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-label">All Centers</div>
+        <div class="center-list" id="centerList"></div>
+      </div>
+    </aside>
+
+    <!-- INFO PANEL -->
+    <div class="info-panel" id="infoPanel">
+      <div class="ip-head">
+        <div class="ip-title" id="ipTitle">-</div>
+        <div class="ip-close" id="ipClose">x</div>
+      </div>
+      <div class="ip-tier" id="ipTier">-</div>
+      <div class="ip-grid">
+        <div class="ip-stat">
+          <div class="ip-stat-lbl" id="ipTimeLabel">Transit to Haystack</div>
+          <div class="ip-stat-val teal" id="ipTransit">-</div>
+        </div>
+        <div class="ip-stat">
+          <div class="ip-stat-lbl">Role</div>
+          <div class="ip-stat-val" id="ipRole" style="font-size:10.5px;line-height:1.3;">-</div>
+        </div>
+      </div>
+
+      <div class="ip-desc" id="ipDesc">-</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// =====================================================
+//  DATA
+// =====================================================
+const HAYSTACK = {
+  name: "Haystack Analytics @ IIT Bombay",
+  lat: 19.1336, lng: 72.9154,
+  address: "SINE, KReSIT Building, IIT Bombay, Powai"
+};
+
+// All centers assigned to entry or full NABH only
+const CENTERS = [
+  // Entry-Level NABH
+  // Entry-Level NABH
+  { id:"borivali",    name:"Borivali",        tier:"entry", lat:19.2307, lng:72.8567, road:60,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+  { id:"ghatkopar",   name:"Ghatkopar",       tier:"entry", lat:19.0866, lng:72.9086, road:25,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+  { id:"thane",       name:"Thane",           tier:"entry", lat:19.2183, lng:72.9781, road:45,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+  { id:"vile-parle",  name:"Vile Parle East", tier:"entry", lat:19.0990, lng:72.8617, road:30,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+  { id:"chembur",     name:"Chembur",         tier:"entry", lat:19.0626, lng:72.9000, road:20,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+  { id:"kemps-corner",name:"Kemps Corner",    tier:"entry", lat:18.9659, lng:72.8088, road:40,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+  { id:"panvel",      name:"Panvel",          tier:"entry", lat:18.9894, lng:73.1175, road:65,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+  { id:"mahim",       name:"Mahim",           tier:"entry", lat:19.0374, lng:72.8406, road:35,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+  { id:"kalyan",      name:"Kalyan",          tier:"entry", lat:19.2403, lng:73.1305, road:75,
+    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+
+  // Full NABH
+  { id:"malad",  name:"Malad",  tier:"full", lat:19.1869, lng:72.8484, road:50,
+    desc:"In-house sequencing setup is possible at this center, eliminating logistics time to Haystack entirely. Haystack provides bioinformatics and analysis support." },
+  { id:"mulund", name:"Mulund", tier:"full", lat:19.1726, lng:72.9558, road:30,
+    desc:"In-house sequencing setup is possible at this center, eliminating logistics time to Haystack entirely. Haystack provides bioinformatics and analysis support." },
+  { id:"vashi",  name:"Vashi",  tier:"full", lat:19.0771, lng:73.0019, road:35,
+    desc:"In-house sequencing setup is possible at this center, eliminating logistics time to Haystack entirely. Haystack provides bioinformatics and analysis support." }
+];
+
+const CFG = {
+  entry: {
+    color: "#f59e0b", glow: "rgba(245,158,11,0.38)", label: "Entry-Level NABH", role: "Patient Recruitment",
+    lineColor: "#f59e0b", lineOpacity: 0.30, lineWeight: 1.8, dash: "7 8"
+  },
+  full: {
+    color: "#3b82f6", glow: "rgba(59,130,246,0.34)", label: "Full NABH", role: "In-house Sequencing",
+    lineColor: "#3b82f6", lineOpacity: 0.18, lineWeight: 1.6, dash: "4 9"
+  }
+};
+
+function totalMins(c) { return c.road + 30; }
+function fmt(m) {
+  if (m < 60) return m + " min";
+  const h = Math.floor(m/60), mm = m%60;
+  return mm ? h+"h "+mm+"m" : h+"h";
+}
+
+// =====================================================
+//  MAP
+// =====================================================
+const map = L.map('map', { center:[19.10, 72.95], zoom:11, zoomControl:true });
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+// =====================================================
+//  ICONS
+// =====================================================
+function makeIcon(tier) {
+  const c = CFG[tier];
+  const sz = tier === 'full' ? 22 : 17;
+  return L.divIcon({
+    className: '', iconSize:[sz,sz], iconAnchor:[sz/2,sz/2], tooltipAnchor:[sz/2+5,0],
+    html:`<div class="mk-wrap" style="width:${sz}px;height:${sz}px;">
+      <div class="mk-ring" style="width:${sz}px;height:${sz}px;background:${c.color};opacity:0.38;"></div>
+      <div class="mk-core" style="width:${sz}px;height:${sz}px;background:${c.color};box-shadow:0 0 ${sz}px ${c.glow};">
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:${sz*0.42}px;">${tier==='full'?'⬡':'◉'}</div>
+      </div>
+    </div>`
+  });
+}
+
+function makeHubIcon() {
+  return L.divIcon({
+    className:'', iconSize:[40,40], iconAnchor:[20,20], tooltipAnchor:[22,0],
+    html:`<div class="mk-wrap" style="width:40px;height:40px;">
+      <div class="mk-ring" style="width:40px;height:40px;background:#00c2a8;opacity:0.28;animation-duration:2s;"></div>
+      <div class="mk-core" style="width:40px;height:40px;background:linear-gradient(135deg,#00c2a8,#17d4e8);box-shadow:0 0 22px rgba(0,194,168,0.55),0 0 0 5px rgba(0,194,168,0.12);display:flex;align-items:center;justify-content:center;font-size:19px;">🧬</div>
+    </div>`
+  });
+}
+
+// =====================================================
+//  HAYSTACK HUB
+// =====================================================
+L.marker([HAYSTACK.lat, HAYSTACK.lng], { icon: makeHubIcon(), zIndexOffset: 1000 })
+  .addTo(map)
+  .bindTooltip(`
+    <div class="tt-name">${HAYSTACK.name}</div>
+    <div class="tt-tier hub">Genomic Analysis Hub</div>
+    <div class="tt-sep"></div>
+    <div class="tt-row"><span class="tt-lbl">Location</span><span class="tt-val">Powai, Mumbai</span></div>
+    <div class="tt-row"><span class="tt-lbl">Partner</span><span class="tt-val">Biostack Logistics</span></div>
+  `, { className:'tt', direction:'right' });
+
+// =====================================================
+//  ROAD ROUTING via OSRM
+// =====================================================
+const OSRM = 'https://router.project-osrm.org/route/v1/driving';
+
+async function fetchRoute(center) {
+  try {
+    const url = `${OSRM}/${HAYSTACK.lng},${HAYSTACK.lat};${center.lng},${center.lat}?overview=full&geometries=geojson`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('OSRM error');
+    const data = await res.json();
+    if (data.routes && data.routes.length > 0) {
+      // OSRM returns [lng, lat] pairs; Leaflet needs [lat, lng]
+      return data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    }
+  } catch (e) {
+    console.warn('Route fetch failed for', center.name, '- using straight line');
+  }
+  // Fallback: straight line
+  return [[HAYSTACK.lat, HAYSTACK.lng], [center.lat, center.lng]];
+}
+
+const routeLines = {};
+
+async function drawAllRoutes() {
+  // Stagger requests slightly to avoid hammering OSRM
+  for (let i = 0; i < CENTERS.length; i++) {
+    const c = CENTERS[i];
+    const cfg = CFG[c.tier];
+    const latlngs = await fetchRoute(c);
+    await new Promise(r => setTimeout(r, 120)); // small stagger
+
+    const total = totalMins(c);
+    const isFull = c.tier === 'full';
+
+    const ttContent = isFull
+      ? `<div style="font-weight:700;margin-bottom:3px;">${c.name} to Haystack</div>
+         <div class="tt-tier full" style="margin-bottom:8px;">Full NABH</div>
+         <div style="font-size:10px;color:#7b9aba;line-height:1.5;">In-house sequencing possible here.<br>Logistics time can be eliminated entirely.</div>`
+      : `<div style="font-weight:700;margin-bottom:3px;">${c.name} to Haystack</div>
+         <div class="tt-tier entry" style="margin-bottom:8px;">Entry-Level NABH</div>
+         <div class="tt-row"><span class="tt-lbl">Road transit</span><span class="tt-val">${fmt(c.road)}</span></div>
+         <div class="tt-row" style="margin-top:3px;"><span class="tt-lbl">Sample collection</span><span class="tt-val">+30 min</span></div>
+         <div class="tt-sep"></div>
+         <div class="tt-row"><span class="tt-lbl">Total logistics time</span><span class="tt-val teal">${fmt(total)}</span></div>`;
+
+    const line = L.polyline(latlngs, {
+      color: cfg.lineColor,
+      weight: cfg.lineWeight,
+      opacity: cfg.lineOpacity,
+      dashArray: cfg.dash,
+      lineCap: 'round', lineJoin: 'round'
+    }).addTo(map);
+
+    line.bindTooltip(ttContent, { className:'tt', sticky:true });
+
+    line.on('mouseover', function() {
+      this.setStyle({ opacity: Math.min(cfg.lineOpacity + 0.38, 0.85), weight: cfg.lineWeight + 1.2 });
+    });
+    line.on('mouseout', function() {
+      this.setStyle({ opacity: cfg.lineOpacity, weight: cfg.lineWeight });
+    });
+
+    routeLines[c.id] = line;
+  }
+}
+
+drawAllRoutes();
+
+// =====================================================
+//  MOC MARKERS + INFO PANEL
+// =====================================================
+function openPanel(c) {
+  const cfg = CFG[c.tier];
+  const total = totalMins(c);
+  const isFull = c.tier === 'full';
+
+  document.getElementById('ipTitle').textContent = c.name;
+
+  const tierEl = document.getElementById('ipTier');
+  tierEl.textContent = cfg.label;
+  tierEl.className = `ip-tier ${c.tier}`;
+
+  document.getElementById('ipTimeLabel').textContent = isFull ? 'Sequencing' : 'Total logistics';
+  document.getElementById('ipTransit').textContent = isFull ? 'In-house possible' : fmt(total);
+  document.getElementById('ipRole').textContent = cfg.role;
+
+  document.getElementById('ipDesc').textContent = c.desc;
+  document.getElementById('infoPanel').classList.add('visible');
+
+  document.querySelectorAll('.cli').forEach(el => el.classList.remove('active'));
+  const li = document.getElementById('cli-' + c.id);
+  if (li) li.classList.add('active');
+}
+
+function closePanel() {
+  document.getElementById('infoPanel').classList.remove('visible');
+  document.querySelectorAll('.cli').forEach(el => el.classList.remove('active'));
+}
+
+CENTERS.forEach(c => {
+  const cfg = CFG[c.tier];
+  const total = totalMins(c);
+  const isFull = c.tier === 'full';
+
+  const marker = L.marker([c.lat, c.lng], {
+    icon: makeIcon(c.tier),
+    zIndexOffset: isFull ? 400 : 200
+  }).addTo(map);
+
+  marker.bindTooltip(`
+    <div class="tt-name">${c.name}</div>
+    <div class="tt-tier ${c.tier}">${cfg.label}</div>
+    <div class="tt-sep"></div>
+    <div class="tt-row">
+      <span class="tt-lbl">${isFull ? 'Sequencing' : 'Total logistics time'}</span>
+      <span class="tt-val ${!isFull?'teal':''}">${isFull ? 'In-house possible' : fmt(total)}</span>
+    </div>
+  `, { className:'tt', direction:'right' });
+
+  marker.on('click', () => {
+    openPanel(c);
+    map.panTo([c.lat, c.lng], { animate:true, duration:0.5 });
+  });
+
+  c._marker = marker;
+});
+
+// =====================================================
+//  SIDEBAR CENTER LIST
+// =====================================================
+const listEl = document.getElementById('centerList');
+const sorted = [...CENTERS].sort((a,b) => {
+  const o = { entry:0, full:1 };
+  return o[a.tier] - o[b.tier];
+});
+
+sorted.forEach(c => {
+  const total = totalMins(c);
+  const isFull = c.tier === 'full';
+  const li = document.createElement('div');
+  li.className = 'cli'; li.id = 'cli-' + c.id;
+  li.innerHTML = `
+    <div class="cli-dot ${c.tier}"></div>
+    <div class="cli-name">${c.name}</div>
+    <div class="cli-time">${isFull ? 'In-house' : fmt(total)}</div>
+  `;
+  li.addEventListener('click', () => {
+    openPanel(c);
+    map.panTo([c.lat, c.lng], { animate:true, duration:0.5 });
+    c._marker && c._marker.openTooltip();
+  });
+  listEl.appendChild(li);
+});
+
+// =====================================================
+//  CLOSE PANEL
+// =====================================================
+document.getElementById('ipClose').addEventListener('click', closePanel);
+map.on('click', e => { if (!e.originalEvent._stopped) closePanel(); });
+</script>
+</body>
+</html>
