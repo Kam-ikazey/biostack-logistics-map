@@ -1,15 +1,15 @@
-# Biostack Logistics Network Map
+# BioStack Logistics Network Map
 
-An interactive, premium visualization of Biostack's genomic logistics infrastructure across the Mumbai Metropolitan Region (MMR). It maps MOC Cancer Care centers to Haystack Analytics (IIT Bombay) as the genomic analysis hub.
+An interactive, premium visualization of BioStack's genomic logistics infrastructure across the Mumbai Metropolitan Region (MMR). It maps MOC Cancer Care centers to the central Genomic Analysis Hub.
 
 ## Features
 
 - **Leaflet.js Integration**: Fully interactive map utilizing CartoDB Dark Matter tile layer for a high-contrast, premium, dark-mode design.
-- **Road-Route Optimization**: The connection lines between MOC centers and Haystack Analytics follow actual driving road routes fetched dynamically via the OSRM (OpenStreetMap Routing Machine) API.
+- **Road-Route Optimization**: The connection lines between MOC centers and the analysis hub follow actual driving road routes fetched dynamically via the OSRM (OpenStreetMap Routing Machine) API.
 - **Color-Coded Classification**:
-  - 🟡 **Entry-Level NABH**: Patient recruitment sites where samples are collected and sent to Haystack.
-  - 🔵 **Full NABH**: Advanced centers with potential for setting up sequencing in-house, eliminating logistics time.
-  - 🟢 **Analysis Hub**: Haystack Analytics at IIT Bombay (Powai), styled as a distinctive central node.
+  - 🟡 **Hospital for Patient Recruitment**: Patient recruitment sites where samples are collected and sent to the analysis hub.
+  - 🔵 **Sequencing Site**: Advanced centers with potential for setting up sequencing in-house, eliminating logistics time.
+  - 🟢 **Analysis Hub**: Located at IIT Bombay (Powai), styled as a distinctive central node.
 - **Interactive Details**: Hovering over route lines highlights them and shows precise road transit times + 30-minute sample collection overhead. Clicking a center marker focuses the map and pulls up a detailed information panel with specific workflows.
 
 ## Project Structure
