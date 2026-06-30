@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Biostack Logistics Network — MOC x Haystack Analytics</title>
-  <meta name="description" content="Biostack's genomic logistics infrastructure mapping MOC Cancer Care centers to Haystack Analytics at IIT Bombay, visualizing sample flow, transit times, and NABH classification across the Mumbai Metropolitan Region." />
+  <title>Biostack Logistics Network</title>
+  <meta name="description" content="Biostack's genomic logistics infrastructure mapping MOC Cancer Care centers across the Mumbai Metropolitan Region, visualizing sample flow and transit times." />
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -269,10 +269,10 @@
       <span class="brand-sub">Genomic Logistics</span>
     </div>
     <div class="header-sep"></div>
-    <div class="header-title"><span>MOC Network</span> x Haystack Analytics @ IIT Bombay</div>
+    <div class="header-title"><span>MOC Network</span> / Mumbai Metropolitan Region</div>
     <div class="header-badges">
-      <span class="badge badge-entry"><span class="badge-dot"></span>Entry NABH</span>
-      <span class="badge badge-full"><span class="badge-dot"></span>Full NABH</span>
+      <span class="badge badge-entry"><span class="badge-dot"></span>Recruitment</span>
+      <span class="badge badge-full"><span class="badge-dot"></span>Sequencing</span>
     </div>
   </header>
 
@@ -284,15 +284,15 @@
     </div>
     <div class="stat-pill">
       <span class="stat-num amber">9</span>
-      <span class="stat-desc">Entry-Level<br>NABH</span>
+      <span class="stat-desc">Patient<br>Recruitment</span>
     </div>
     <div class="stat-pill">
       <span class="stat-num blue">3</span>
-      <span class="stat-desc">Full<br>NABH</span>
+      <span class="stat-desc">Sequencing<br>Sites</span>
     </div>
     <div class="stat-pill">
       <span class="stat-num teal" style="font-size:11px;">IIT Bombay</span>
-      <span class="stat-desc">Haystack Analytics<br>Analysis Hub</span>
+      <span class="stat-desc">Genomic Analysis<br>Hub</span>
     </div>
   </div>
 
@@ -313,9 +313,9 @@
             </svg>
           </div>
           <div class="hub-info">
-            <h3>Haystack Analytics</h3>
+            <h3>Genomic Analysis Hub</h3>
             <p>SINE, KReSIT Building<br>IIT Bombay, Powai 400076</p>
-            <div class="hub-role">Genomic Analysis Partner</div>
+            <div class="hub-role">Analysis Partner</div>
           </div>
         </div>
       </div>
@@ -325,15 +325,15 @@
         <div class="leg-item">
           <div class="leg-mk entry"><span>◉</span></div>
           <div class="leg-text">
-            <h4 style="color:var(--entry-color);">Entry-Level NABH</h4>
-            <p>Patient recruitment. Samples sent to Haystack for sequencing.</p>
+            <h4 style="color:var(--entry-color);">Hospital for Patient Recruitment</h4>
+            <p>Samples collected and sent to the analysis hub for sequencing.</p>
           </div>
         </div>
         <div class="leg-item">
           <div class="leg-mk full"><span>⬡</span></div>
           <div class="leg-text">
-            <h4 style="color:var(--full-color);">Full NABH</h4>
-            <p>In-house sequencing possible. Analysis collaboration with Haystack.</p>
+            <h4 style="color:var(--full-color);">Sequencing Site</h4>
+            <p>In-house sequencing possible, eliminating logistics time.</p>
           </div>
         </div>
       </div>
@@ -353,7 +353,7 @@
       <div class="ip-tier" id="ipTier">-</div>
       <div class="ip-grid">
         <div class="ip-stat">
-          <div class="ip-stat-lbl" id="ipTimeLabel">Transit to Haystack</div>
+          <div class="ip-stat-lbl" id="ipTimeLabel">Transit to Hub</div>
           <div class="ip-stat-val teal" id="ipTransit">-</div>
         </div>
         <div class="ip-stat">
@@ -374,50 +374,49 @@
 //  DATA
 // =====================================================
 const HAYSTACK = {
-  name: "Haystack Analytics @ IIT Bombay",
+  name: "Genomic Analysis Hub",
+  sub: "IIT Bombay, Powai",
   lat: 19.1336, lng: 72.9154,
   address: "SINE, KReSIT Building, IIT Bombay, Powai"
 };
 
-// All centers assigned to entry or full NABH only
 const CENTERS = [
-  // Entry-Level NABH
-  // Entry-Level NABH
+  // Hospitals for Patient Recruitment
   { id:"borivali",    name:"Borivali",        tier:"entry", lat:19.2307, lng:72.8567, road:60,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
   { id:"ghatkopar",   name:"Ghatkopar",       tier:"entry", lat:19.0866, lng:72.9086, road:25,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
   { id:"thane",       name:"Thane",           tier:"entry", lat:19.2183, lng:72.9781, road:45,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
   { id:"vile-parle",  name:"Vile Parle East", tier:"entry", lat:19.0990, lng:72.8617, road:30,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
   { id:"chembur",     name:"Chembur",         tier:"entry", lat:19.0626, lng:72.9000, road:20,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
   { id:"kemps-corner",name:"Kemps Corner",    tier:"entry", lat:18.9659, lng:72.8088, road:40,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
   { id:"panvel",      name:"Panvel",          tier:"entry", lat:18.9894, lng:73.1175, road:65,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
   { id:"mahim",       name:"Mahim",           tier:"entry", lat:19.0374, lng:72.8406, road:35,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
   { id:"kalyan",      name:"Kalyan",          tier:"entry", lat:19.2403, lng:73.1305, road:75,
-    desc:"Patient recruitment site. Samples collected and sent to Haystack at IIT Bombay for genomic sequencing and analysis." },
+    desc:"Hospital for patient recruitment. Samples are collected and transported to the genomic analysis hub for sequencing." },
 
-  // Full NABH
+  // Sequencing Sites
   { id:"malad",  name:"Malad",  tier:"full", lat:19.1869, lng:72.8484, road:50,
-    desc:"In-house sequencing setup is possible at this center, eliminating logistics time to Haystack entirely. Haystack provides bioinformatics and analysis support." },
+    desc:"In-house sequencing setup is possible at this center, eliminating logistics time entirely. The analysis hub provides bioinformatics support." },
   { id:"mulund", name:"Mulund", tier:"full", lat:19.1726, lng:72.9558, road:30,
-    desc:"In-house sequencing setup is possible at this center, eliminating logistics time to Haystack entirely. Haystack provides bioinformatics and analysis support." },
+    desc:"In-house sequencing setup is possible at this center, eliminating logistics time entirely. The analysis hub provides bioinformatics support." },
   { id:"vashi",  name:"Vashi",  tier:"full", lat:19.0771, lng:73.0019, road:35,
-    desc:"In-house sequencing setup is possible at this center, eliminating logistics time to Haystack entirely. Haystack provides bioinformatics and analysis support." }
+    desc:"In-house sequencing setup is possible at this center, eliminating logistics time entirely. The analysis hub provides bioinformatics support." }
 ];
 
 const CFG = {
   entry: {
-    color: "#f59e0b", glow: "rgba(245,158,11,0.38)", label: "Entry-Level NABH", role: "Patient Recruitment",
+    color: "#f59e0b", glow: "rgba(245,158,11,0.38)", label: "Hospital for Patient Recruitment", role: "Patient Recruitment",
     lineColor: "#f59e0b", lineOpacity: 0.30, lineWeight: 1.8, dash: "7 8"
   },
   full: {
-    color: "#3b82f6", glow: "rgba(59,130,246,0.34)", label: "Full NABH", role: "In-house Sequencing",
+    color: "#3b82f6", glow: "rgba(59,130,246,0.34)", label: "Sequencing Site", role: "In-house Sequencing",
     lineColor: "#3b82f6", lineOpacity: 0.18, lineWeight: 1.6, dash: "4 9"
   }
 };
@@ -473,10 +472,9 @@ L.marker([HAYSTACK.lat, HAYSTACK.lng], { icon: makeHubIcon(), zIndexOffset: 1000
   .addTo(map)
   .bindTooltip(`
     <div class="tt-name">${HAYSTACK.name}</div>
-    <div class="tt-tier hub">Genomic Analysis Hub</div>
+    <div class="tt-tier hub">IIT Bombay, Powai</div>
     <div class="tt-sep"></div>
-    <div class="tt-row"><span class="tt-lbl">Location</span><span class="tt-val">Powai, Mumbai</span></div>
-    <div class="tt-row"><span class="tt-lbl">Partner</span><span class="tt-val">Biostack Logistics</span></div>
+    <div class="tt-row"><span class="tt-lbl">Role</span><span class="tt-val">Genomic Analysis</span></div>
   `, { className:'tt', direction:'right' });
 
 // =====================================================
@@ -515,11 +513,11 @@ async function drawAllRoutes() {
     const isFull = c.tier === 'full';
 
     const ttContent = isFull
-      ? `<div style="font-weight:700;margin-bottom:3px;">${c.name} to Haystack</div>
-         <div class="tt-tier full" style="margin-bottom:8px;">Full NABH</div>
+      ? `<div style="font-weight:700;margin-bottom:3px;">${c.name} to Analysis Hub</div>
+         <div class="tt-tier full" style="margin-bottom:8px;">Sequencing Site</div>
          <div style="font-size:10px;color:#7b9aba;line-height:1.5;">In-house sequencing possible here.<br>Logistics time can be eliminated entirely.</div>`
-      : `<div style="font-weight:700;margin-bottom:3px;">${c.name} to Haystack</div>
-         <div class="tt-tier entry" style="margin-bottom:8px;">Entry-Level NABH</div>
+      : `<div style="font-weight:700;margin-bottom:3px;">${c.name} to Analysis Hub</div>
+         <div class="tt-tier entry" style="margin-bottom:8px;">Hospital for Patient Recruitment</div>
          <div class="tt-row"><span class="tt-lbl">Road transit</span><span class="tt-val">${fmt(c.road)}</span></div>
          <div class="tt-row" style="margin-top:3px;"><span class="tt-lbl">Sample collection</span><span class="tt-val">+30 min</span></div>
          <div class="tt-sep"></div>
@@ -562,7 +560,7 @@ function openPanel(c) {
   tierEl.textContent = cfg.label;
   tierEl.className = `ip-tier ${c.tier}`;
 
-  document.getElementById('ipTimeLabel').textContent = isFull ? 'Sequencing' : 'Total logistics';
+  document.getElementById('ipTimeLabel').textContent = isFull ? 'Sequencing' : 'Transit to Hub';
   document.getElementById('ipTransit').textContent = isFull ? 'In-house possible' : fmt(total);
   document.getElementById('ipRole').textContent = cfg.role;
 
