@@ -373,7 +373,7 @@
 // =====================================================
 //  DATA
 // =====================================================
-const HAYSTACK = {
+const HUB = {
   name: "Genomic Analysis Hub",
   sub: "IIT Bombay, Powai",
   lat: 19.1336, lng: 72.9154,
@@ -466,12 +466,12 @@ function makeHubIcon() {
 }
 
 // =====================================================
-//  HAYSTACK HUB
+//  ANALYSIS HUB
 // =====================================================
-L.marker([HAYSTACK.lat, HAYSTACK.lng], { icon: makeHubIcon(), zIndexOffset: 1000 })
+L.marker([HUB.lat, HUB.lng], { icon: makeHubIcon(), zIndexOffset: 1000 })
   .addTo(map)
   .bindTooltip(`
-    <div class="tt-name">${HAYSTACK.name}</div>
+    <div class="tt-name">${HUB.name}</div>
     <div class="tt-tier hub">IIT Bombay, Powai</div>
     <div class="tt-sep"></div>
     <div class="tt-row"><span class="tt-lbl">Role</span><span class="tt-val">Genomic Analysis</span></div>
@@ -484,7 +484,7 @@ const OSRM = 'https://router.project-osrm.org/route/v1/driving';
 
 async function fetchRoute(center) {
   try {
-    const url = `${OSRM}/${HAYSTACK.lng},${HAYSTACK.lat};${center.lng},${center.lat}?overview=full&geometries=geojson`;
+    const url = `${OSRM}/${HUB.lng},${HUB.lat};${center.lng},${center.lat}?overview=full&geometries=geojson`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('OSRM error');
     const data = await res.json();
@@ -496,7 +496,7 @@ async function fetchRoute(center) {
     console.warn('Route fetch failed for', center.name, '- using straight line');
   }
   // Fallback: straight line
-  return [[HAYSTACK.lat, HAYSTACK.lng], [center.lat, center.lng]];
+  return [[HUB.lat, HUB.lng], [center.lat, center.lng]];
 }
 
 const routeLines = {};
